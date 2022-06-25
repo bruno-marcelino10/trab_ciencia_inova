@@ -1,3 +1,5 @@
+# Extração de Dados
+
 library(httr)
 library(jsonlite)
 library(tidyverse)
@@ -7,12 +9,6 @@ library(tidyverse)
 
 # Definir o tipo de proposição a ser extraída conforme nomenclatura disponível em http://dadosabertos.almg.gov.br/ws/proposicoes/ajuda#tiposProposicao
 tipo <- "PL"
-
-dir.create("./02_data_colecao/dados/ALMG/")
-
-dir.create(paste0("./02_data_colecao/dados/ALMG/", tipo))
-
-ano <- 1980
 
 # Fazer para cada ano
 baixar_base <- function(ano) {
@@ -70,66 +66,31 @@ baixar_base <- function(ano) {
         tabela <- map_dfr(1:nr_paginas, extrair_paginas) %>%
             bind_rows()
         
-        write_csv(tabela, paste0("./02_data_colecao/dados/ALMG/", tipo, "/", ano, ".csv"))
+        write_csv(tabela, paste0("dados/", ano, ".csv"))
         
         return(tabela)
         
     }
 }
 
+# Definir a quantidade de anos pesquisados (desde 1959)
+periodo = 2009:2016 
+raw_data <- map(periodo, baixar_base) # Pegar dados para os anos desejados - Ex: 2019:2021 extrai os dados considerado o período de 2019 a 2021
 
-dados <- map(1980, baixar_base) # Pegar dados para os anos desejados - Ex: 2019:2021 extrai os dados considerado o período de 2019 a 2021
+#### União dos dados de todos os anos
 
-#### Processamento básico dos arquivos
+# Lista os arquivos na pasta
+# arquivos <- list.files("dados/", full.names = TRUE)
 
-arquivos <- list.files("./02_data_colecao/dados/ALMG/PL", full.names = TRUE)
+# Função que cria os nomes dos últimos anos a partir de 2021
+arquivos <- vector()
+for (i in 1:3){arquivos[i] = paste0("dados/",2022-i , ".csv")}
 
-PL <- map(arquivos, read_csv) %>%
-    bind_rows()
+dados <- map(arquivos, read_csv) %>% bind_rows() # PROBLEMA: coluna "horário" lida de forma diferente
 
-#### extrair partido do autor
+### Escreve .csv com os arquivos
+write_csv(dados, "dados/dados.csv")
 
-PL <- PL %>%
-    select(dominio, autor, numero, ano, ementa, assuntoGeral) %>%
-    separate_rows(autor, sep = "\n") %>% # Múltipla autoria separada por nova linha \n
-    separate_rows(assuntoGeral, sep = "\n") %>% # Múltiplo assuntos separados por nova linha \n
-    mutate(partido = sub(".*   ", "", autor)) %>%
-    mutate(autor = sub("   .*", "", autor))
-
-
-#### extrair temas
-
-# Partidos por assunto
-
-partidos_assunto <- PL %>%
-    count(partido, assuntoGeral) %>%
-    group_by(assuntoGeral) %>%
-    slice_max(order_by = n, n = 15)
-
-deputado_assunto <- PL %>%
-    count(autor, assuntoGeral) %>%
-    group_by(assuntoGeral) %>%
-    slice_max(order_by = n, n = 15)
-
-assunto <- PL %>%
-    count(assuntoGeral, sort = TRUE)
-
-
-#### Converter período 2019-2021 para excel ####
-
-# arquivos <- list.files("./dados/dados_brutos/PL", full.names = TRUE)
-# 
-# arquivos <- arquivos[grepl("2019|2020|2021", arquivos)]
-# 
-# temp <- map(arquivos, read_csv) %>%
-#   bind_rows()
-# 
-# 
-# write.xlsx(temp, "./dados/PL_2019_2021.xlsx")
-
-
-
-
-
-
-
+### Escreve .xlsx com os arquivos
+#library("xlsx")
+#write.xlsx(dados, "dados/dados.xlsx")
