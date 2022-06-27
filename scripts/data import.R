@@ -47,7 +47,8 @@ baixar_base <- function(ano) {
                     fromJSON(flatten=TRUE)
                 
                 tabela <- as_tibble(tabela$resultado$listaItem) %>%
-                    mutate_all(as.character)
+                    mutate_all(as.character) %>%
+                    select(-horario)
                 
                 Sys.sleep(5)
                 
