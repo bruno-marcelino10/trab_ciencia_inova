@@ -6,8 +6,7 @@ arquivos <- list.files("./dados/dados_brutos/PL", full.names = TRUE)
 
 arquivos <- arquivos[grepl("2019|2020|2021", arquivos)]
 
-PL <- map(arquivos, read_csv) %>%
-  bind_rows()
+PL <- map_dfr(arquivos, read_csv)
 
 #### extrair partido do autor
 
