@@ -6,7 +6,6 @@ library(tidyverse)
 
 # Maximo tamanho de pagina = 100
 
-
 # Definir o tipo de proposição a ser extraída conforme nomenclatura disponível em http://dadosabertos.almg.gov.br/ws/proposicoes/ajuda#tiposProposicao
 tipo <- "PL"
 
@@ -75,22 +74,17 @@ baixar_base <- function(ano) {
 }
 
 # Definir a quantidade de anos pesquisados (desde 1959)
-periodo = 2009:2016 
-raw_data <- map(periodo, baixar_base) # Pegar dados para os anos desejados - Ex: 2019:2021 extrai os dados considerado o período de 2019 a 2021
+periodo = 1990:2021 
+raw_data <- map(periodo, baixar_base) 
 
 #### União dos dados de todos os anos
 
 # Lista os arquivos na pasta
-# arquivos <- list.files("dados/", full.names = TRUE)
-
-# Função que cria os nomes dos últimos anos a partir de 2021
-arquivos <- vector()
-for (i in 1:3){arquivos[i] = paste0("dados/",2022-i , ".csv")}
-
-dados <- map(arquivos, read_csv) %>% bind_rows() # PROBLEMA: coluna "horário" lida de forma diferente
+arquivos <- list.files("dados/", full.names = TRUE)[-c(33:42)]
+dados <- map(arquivos, read_csv, col_types = cols(.default = "c")) %>% bind_rows()
 
 ### Escreve .csv com os arquivos
-write_csv(dados, "dados/dados.csv")
+#write_csv(dados, "dados/dados.csv")
 
 ### Escreve .xlsx com os arquivos
 #library("xlsx")
